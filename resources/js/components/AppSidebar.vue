@@ -59,7 +59,17 @@ const footerNavItems: NavItem[] = [
 
         <SidebarFooter>
             <NavFooter :items="footerNavItems" />
-            <NavUser />
+
+            <NavUser v-if="$page.props.auth.user" />
+
+            <div v-else class="p-2">
+                <Link
+                    href="/login"
+                    class="flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                >
+                    Log in
+                </Link>
+            </div>
         </SidebarFooter>
     </Sidebar>
     <slot />

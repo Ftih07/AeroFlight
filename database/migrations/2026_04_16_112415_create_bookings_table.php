@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('flight_id')->constrained()->cascadeOnDelete();
             $table->string('pnr_code')->unique()->nullable(); // 6 digit alfanumerik (keluar setelah bayar)
             $table->decimal('total_amount_usd', 10, 2);
-            $table->enum('status', ['pending', 'paid', 'expired', 'cancelled'])->default('pending');
+            $table->string('status')->default('pending');
             $table->string('stripe_payment_id')->nullable(); // Disimpan saat webhook Stripe sukses
             $table->timestamps();
         });

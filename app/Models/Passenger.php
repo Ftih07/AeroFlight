@@ -8,6 +8,7 @@ class Passenger extends Model
 {
     protected $fillable = [
         'booking_id',
+        'seat_id',
         'first_name',
         'last_name',
         'passport_number'
@@ -16,5 +17,10 @@ class Passenger extends Model
     public function booking()
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    public function seat()
+    {
+        return $this->belongsTo(Seat::class);
     }
 }
