@@ -1,39 +1,42 @@
-<script setup>
-import { computed, ref, onMounted } from 'vue';
+<script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { computed, ref, onMounted } from 'vue';
 import AeroLayout from '@/layouts/AeroLayout.vue';
 
 const props = defineProps({
     status: Number,
 });
-
 /**
  * Dynamic title mapping (aviation tone)
  */
 const title = computed(() => {
-    return (
-        {
-            503: 'Service Temporarily Grounded',
-            500: 'In-Flight System Error',
-            404: 'Flight Not Found',
-            403: 'Access Restricted',
-            429: 'Too Many Requests',
-        }[props.status] || 'Unexpected Error'
-    );
+    // Beri tahu TypeScript bahwa ini adalah objek dengan key angka dan value string
+    const titles: Record<number, string> = {
+        503: 'Service Temporarily Grounded',
+        500: 'In-Flight System Error',
+        404: 'Flight Not Found',
+        403: 'Access Restricted',
+        429: 'Too Many Requests',
+    };
+
+    // Cek apakah status ada, baru ambil nilainya
+    return (props.status && titles[props.status]) || 'Unexpected Error';
 });
 
 /**
  * Dynamic description mapping
  */
 const description = computed(() => {
+    const descriptions: Record<number, string> = {
+        503: 'We are performing scheduled maintenance. Please standby while we prepare for takeoff again.',
+        500: 'Unexpected turbulence detected. Our engineering crew is stabilizing the system.',
+        404: 'The flight or route you are looking for is no longer available or has been redirected.',
+        403: 'You do not have the required boarding clearance to access this area.',
+        429: 'You are navigating too quickly. Please wait a moment before continuing.',
+    };
+
     return (
-        {
-            503: 'We are performing scheduled maintenance. Please standby while we prepare for takeoff again.',
-            500: 'Unexpected turbulence detected. Our engineering crew is stabilizing the system.',
-            404: 'The flight or route you are looking for is no longer available or has been redirected.',
-            403: 'You do not have the required boarding clearance to access this area.',
-            429: 'You are navigating too quickly. Please wait a moment before continuing.',
-        }[props.status] ||
+        (props.status && descriptions[props.status]) ||
         'An unexpected system issue has occurred. Please try again later.'
     );
 });
@@ -45,6 +48,7 @@ const primaryAction = computed(() => {
     if (props.status === 404) {
         return { label: 'Search Flights', href: '/flights' };
     }
+
     return { label: 'Return to Home', href: '/' };
 });
 
@@ -67,7 +71,7 @@ onMounted(() => {
         <Head :title="title" />
 
         <div
-            class="relative flex min-h-[80vh] items-center justify-center overflow-hidden px-4 py-16 text-center mt-14"
+            class="relative mt-14 flex min-h-[80vh] items-center justify-center overflow-hidden px-4 py-16 text-center"
         >
             <!-- 🌌 Layered Background -->
             <div class="absolute inset-0 -z-10">
