@@ -63,11 +63,20 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/Login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'canRegister' => Features::enabled(Features::registration()),
-            'status' => $request->session()->get('status'),
-        ]));
+        Fortify::loginView(function (Request $request) {
+            $previousUrl = \Illuminate\Support\Facades\URL::previous();
+            
+            // Simpan URL sebelumnya ke session, asalkan bukan dari halaman auth
+            if (! \Illuminate\Support\Str::contains($previousUrl, ['/login', '/register'])) {
+                \Illuminate\Support\Facades\Session::put('url.intended', $previousUrl);
+            }
+
+            return Inertia::render('auth/Login', [
+                'canResetPassword' => Features::enabled(Features::resetPasswords()),
+                'canRegister' => Features::enabled(Features::registration()),
+                'status' => $request->session()->get('status'),
+            ]);
+        });
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/ResetPassword', [
             'email' => $request->email,
@@ -82,7 +91,15 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/Register'));
+        Fortify::registerView(function () {
+            $previousUrl = \Illuminate\Support\Facades\URL::previous();
+            
+            if (! \Illuminate\Support\Str::contains($previousUrl, ['/login', '/register'])) {
+                \Illuminate\Support\Facades\Session::put('url.intended', $previousUrl);
+            }
+
+            return Inertia::render('auth/Register');
+        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/TwoFactorChallenge'));
 

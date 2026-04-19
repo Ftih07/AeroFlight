@@ -95,17 +95,7 @@ defineOptions({
             </Button>
         </div>
 
-        <div class="text-center text-sm text-muted-foreground">
-            Already have an account?
-            <TextLink
-                :href="login()"
-                class="underline underline-offset-4"
-                :tabindex="6"
-                >Log in</TextLink
-            >
-        </div>
-
-        <div class="relative my-6">
+        <div class="relative my-2">
             <div class="absolute inset-0 flex items-center">
                 <span
                     class="w-full border-t border-gray-300 dark:border-gray-700"
@@ -113,7 +103,7 @@ defineOptions({
             </div>
             <div class="relative flex justify-center text-xs uppercase">
                 <span class="bg-background px-2 text-muted-foreground">
-                    Atau masuk dengan
+                    Or continue with
                 </span>
             </div>
         </div>
@@ -146,5 +136,15 @@ defineOptions({
             </svg>
             Google
         </a>
+
+        <div class="text-center text-sm text-muted-foreground">
+            Already have an account?
+            <TextLink
+                :href="login()"
+                class="underline underline-offset-4"
+                :tabindex="6"
+                >Log in</TextLink
+            >
+        </div>
     </Form>
 </template>

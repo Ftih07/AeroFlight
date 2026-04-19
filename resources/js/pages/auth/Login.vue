@@ -90,33 +90,27 @@ defineProps<{
 
             <Button
                 type="submit"
-                class="mt-4 w-full"
+                class="mt-2 w-full"
                 :tabindex="4"
                 :disabled="processing"
                 data-test="login-button"
             >
-                <Spinner v-if="processing" />
+                <Spinner v-if="processing" class="mr-2 h-4 w-4" />
                 Log in
             </Button>
         </div>
 
-        <div
-            class="text-center text-sm text-muted-foreground"
-            v-if="canRegister"
-        >
-            Don't have an account?
-            <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
-        </div>
-
-        <div class="relative my-6">
+        <div class="relative my-2">
             <div class="absolute inset-0 flex items-center">
-                <span
-                    class="w-full border-t border-gray-300 dark:border-gray-700"
-                ></span>
+                <span class="w-full border-t border-border"></span>
             </div>
-            <div class="relative flex justify-center text-xs uppercase">
-                <span class="bg-background px-2 text-muted-foreground">
-                    Atau masuk dengan
+            <div
+                class="relative flex justify-center text-xs tracking-widest uppercase"
+            >
+                <span
+                    class="bg-background px-3 font-medium text-muted-foreground"
+                >
+                    Or continue with
                 </span>
             </div>
         </div>
@@ -149,5 +143,19 @@ defineProps<{
             </svg>
             Google
         </a>
+
+        <div
+            class="mt-2 text-center text-sm text-muted-foreground"
+            v-if="canRegister"
+        >
+            Don't have an account?
+            <TextLink
+                :href="register()"
+                :tabindex="5"
+                class="ml-1 font-semibold text-foreground hover:underline"
+            >
+                Sign up
+            </TextLink>
+        </div>
     </Form>
 </template>

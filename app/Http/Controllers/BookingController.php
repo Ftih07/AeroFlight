@@ -6,12 +6,13 @@ use App\Models\Booking;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
     public function history(Request $request)
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         $bookings = Booking::with(['flight', 'transactions'])
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
@@ -22,6 +23,8 @@ class BookingController extends Controller
 
     public function downloadTicket(Booking $booking)
     {
+        $booking->load(['flight', 'passengers.seat']);
+
         $pdf = Pdf::loadView('emails.ticket', ['booking' => $booking]);
         return $pdf->download('Ticket-' . $booking->pnr_code . '.pdf');
     }

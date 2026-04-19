@@ -14,6 +14,7 @@ use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\BookingConfirmed;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 class CheckoutController extends Controller
@@ -46,7 +47,7 @@ class CheckoutController extends Controller
             }
 
             $booking = Booking::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'flight_id' => $flight->id,
                 'total_amount_usd' => $totalPrice,
                 'status' => 'pending',
@@ -65,38 +66,39 @@ class CheckoutController extends Controller
 
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
-            $checkoutSession = Session::create([
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'usd',
-                        'product_data' => ['name' => 'Flight ' . $flight->flight_number . ' to ' . $flight->destination_airport],
-                        'unit_amount' => $totalPrice * 100,
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => route('checkout.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('flights.seats', $flight->id),
-                'metadata' => ['booking_id' => $booking->id]
+            // 1. BUAT PAYMENT INTENT (Bukan Checkout Session)
+            $paymentIntent = \Stripe\PaymentIntent::create([
+                'amount' => $totalPrice * 100, // Stripe pakai satuan cent
+                'currency' => 'usd',
+                'description' => 'AeroFlight Booking - ' . $flight->origin_airport . ' to ' . $flight->destination_airport,
+                'metadata' => ['booking_id' => $booking->id],
+                'receipt_email' => Auth::user()->email,
             ]);
 
-            $booking->update(['stripe_payment_id' => $checkoutSession->id]);
+            $booking->update(['stripe_payment_id' => $paymentIntent->id]);
 
-            return Inertia::location($checkoutSession->url);
+            // 2. LEMPAR KE HALAMAN VUE PEMBAYARAN KITA SENDIRI
+            return Inertia::render('Flights/Payment', [
+                'flight' => $flight,
+                'booking' => $booking->load('passengers'),
+                'clientSecret' => $paymentIntent->client_secret,
+                'stripeKey' => env('STRIPE_KEY') // Pastikan ada STRIPE_KEY di .env
+            ]);
         });
     }
 
     public function success(Request $request)
     {
         Stripe::setApiKey(env('STRIPE_SECRET'));
-        $session = Session::retrieve($request->session_id);
 
-        if ($session->payment_status !== 'paid') {
-            return redirect()->route('home')->with('error', 'Pembayaran belum diselesaikan.');
+        // Stripe Elements mengirimkan payment_intent di URL, bukan session_id
+        $paymentIntent = \Stripe\PaymentIntent::retrieve($request->payment_intent);
+
+        if ($paymentIntent->status !== 'succeeded') {
+            return redirect()->route('home')->with('error', 'Pembayaran gagal atau belum selesai.');
         }
 
-        $booking = Booking::with(['flight', 'passengers'])->find($session->metadata->booking_id);
+        $booking = Booking::with(['flight', 'passengers'])->find($paymentIntent->metadata->booking_id);
 
         if ($booking && $booking->status === 'pending') {
             $booking->update([
@@ -107,7 +109,7 @@ class CheckoutController extends Controller
             $booking->transactions()->create([
                 'type' => 'payment',
                 'amount' => $booking->total_amount_usd,
-                'description' => 'Initial payment received via Stripe'
+                'description' => 'Payment received via Stripe Elements'
             ]);
 
             $pdf = Pdf::loadView('emails.ticket', ['booking' => $booking]);

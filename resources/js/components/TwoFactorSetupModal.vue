@@ -19,7 +19,6 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { Spinner } from '@/components/ui/spinner';
-import { useAppearance } from '@/composables/useAppearance';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
 import { confirm } from '@/routes/two-factor';
 import type { TwoFactorConfigContent } from '@/types';
@@ -28,8 +27,6 @@ type Props = {
     requiresConfirmation: boolean;
     twoFactorEnabled: boolean;
 };
-
-const { resolvedAppearance } = useAppearance();
 
 const props = defineProps<Props>();
 const isOpen = defineModel<boolean>('isOpen');
@@ -46,18 +43,18 @@ const pinInputContainerRef = useTemplateRef('pinInputContainerRef');
 const modalConfig = computed<TwoFactorConfigContent>(() => {
     if (props.twoFactorEnabled) {
         return {
-            title: 'Two-factor authentication enabled',
+            title: '2FA Enabled',
             description:
-                'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
+                'Two-factor authentication is now active. Your account is secured.',
             buttonText: 'Close',
         };
     }
 
     if (showVerificationStep.value) {
         return {
-            title: 'Verify authentication code',
+            title: 'Verify Code',
             description: 'Enter the 6-digit code from your authenticator app',
-            buttonText: 'Continue',
+            buttonText: 'Confirm',
         };
     }
 
@@ -111,127 +108,108 @@ watch(
 
 <template>
     <Dialog :open="isOpen" @update:open="isOpen = $event">
-        <DialogContent class="sm:max-w-md">
-            <DialogHeader class="flex items-center justify-center">
+        <DialogContent
+            class="aero-root rounded-2xl border-border bg-card p-6 text-foreground shadow-2xl sm:max-w-md"
+        >
+            <DialogHeader
+                class="flex flex-col items-center justify-center space-y-3 pt-4 pb-2"
+            >
                 <div
-                    class="mb-3 w-auto rounded-full border border-border bg-card p-0.5 shadow-sm"
+                    class="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-sm"
                 >
-                    <div
-                        class="relative overflow-hidden rounded-full border border-border bg-muted p-2.5"
-                    >
-                        <div
-                            class="absolute inset-0 grid grid-cols-5 opacity-50"
-                        >
-                            <div
-                                v-for="i in 5"
-                                :key="`col-${i}`"
-                                class="border-r border-border last:border-r-0"
-                            />
-                        </div>
-                        <div
-                            class="absolute inset-0 grid grid-rows-5 opacity-50"
-                        >
-                            <div
-                                v-for="i in 5"
-                                :key="`row-${i}`"
-                                class="border-b border-border last:border-b-0"
-                            />
-                        </div>
-                        <ScanLine
-                            class="relative z-20 size-6 text-foreground"
-                        />
-                    </div>
+                    <ScanLine class="h-6 w-6" />
                 </div>
-                <DialogTitle>{{ modalConfig.title }}</DialogTitle>
-                <DialogDescription class="text-center">
+
+                <DialogTitle
+                    class="text-center text-xl font-black tracking-tight text-foreground"
+                >
+                    {{ modalConfig.title }}
+                </DialogTitle>
+                <DialogDescription
+                    class="text-center text-sm font-medium text-muted-foreground"
+                >
                     {{ modalConfig.description }}
                 </DialogDescription>
             </DialogHeader>
 
             <div
-                class="relative flex w-auto flex-col items-center justify-center space-y-5"
+                class="flex w-full flex-col items-center justify-center space-y-6 pt-2"
             >
                 <template v-if="!showVerificationStep">
-                    <AlertError v-if="errors?.length" :errors="errors" />
+                    <AlertError
+                        v-if="errors?.length"
+                        :errors="errors"
+                        class="w-full"
+                    />
+
                     <template v-else>
                         <div
-                            class="relative mx-auto flex max-w-md items-center overflow-hidden"
+                            class="relative mx-auto flex h-48 w-48 items-center justify-center overflow-hidden rounded-xl border border-border bg-white p-3 shadow-inner"
                         >
                             <div
-                                class="relative mx-auto aspect-square w-64 overflow-hidden rounded-lg border border-border"
+                                v-if="!qrCodeSvg"
+                                class="flex h-full w-full items-center justify-center bg-gray-50"
                             >
-                                <div
-                                    v-if="!qrCodeSvg"
-                                    class="absolute inset-0 z-10 flex aspect-square h-auto w-full animate-pulse items-center justify-center bg-background"
-                                >
-                                    <Spinner class="size-6" />
-                                </div>
-                                <div
-                                    v-else
-                                    class="relative z-10 overflow-hidden border p-5"
-                                >
-                                    <div
-                                        v-html="qrCodeSvg"
-                                        class="flex aspect-square size-full items-center justify-center"
-                                        :style="{
-                                            filter:
-                                                resolvedAppearance === 'dark'
-                                                    ? 'invert(1) brightness(1.5)'
-                                                    : undefined,
-                                        }"
-                                    />
-                                </div>
+                                <Spinner class="h-6 w-6 text-primary" />
                             </div>
-                        </div>
-
-                        <div class="flex w-full items-center space-x-5">
-                            <Button class="w-full" @click="handleModalNextStep">
-                                {{ modalConfig.buttonText }}
-                            </Button>
-                        </div>
-
-                        <div
-                            class="relative flex w-full items-center justify-center"
-                        >
                             <div
-                                class="absolute inset-0 top-1/2 h-px w-full bg-border"
+                                v-else
+                                v-html="qrCodeSvg"
+                                class="flex h-full w-full items-center justify-center text-black [&>svg]:h-full [&>svg]:w-full"
                             />
-                            <span class="relative bg-card px-2 py-1"
-                                >or, enter the code manually</span
+                        </div>
+
+                        <Button
+                            class="hover:bg-primary-hover w-full bg-primary text-primary-foreground shadow-sm"
+                            @click="handleModalNextStep"
+                            size="lg"
+                        >
+                            {{ modalConfig.buttonText }}
+                        </Button>
+
+                        <div
+                            class="relative flex w-full items-center justify-center py-1"
+                        >
+                            <div
+                                class="absolute inset-0 top-1/2 h-[1px] w-full bg-border"
+                            />
+                            <span
+                                class="relative bg-card px-3 text-[10px] font-bold tracking-widest text-muted-foreground uppercase"
                             >
+                                or, enter the code manually
+                            </span>
                         </div>
 
                         <div
-                            class="flex w-full items-center justify-center space-x-2"
+                            class="flex w-full overflow-hidden rounded-lg border border-border bg-muted/30 transition-colors focus-within:border-primary/50"
                         >
                             <div
-                                class="flex w-full items-stretch overflow-hidden rounded-xl border border-border"
+                                v-if="!manualSetupKey"
+                                class="flex w-full items-center justify-center p-3 text-muted-foreground"
                             >
-                                <div
-                                    v-if="!manualSetupKey"
-                                    class="flex h-full w-full items-center justify-center bg-muted p-3"
-                                >
-                                    <Spinner />
-                                </div>
-                                <template v-else>
-                                    <input
-                                        type="text"
-                                        readonly
-                                        :value="manualSetupKey"
-                                        class="h-full w-full bg-background p-3 text-foreground"
-                                    />
-                                    <button
-                                        @click="copy(manualSetupKey || '')"
-                                        class="relative block h-auto border-l border-border px-3 hover:bg-muted"
-                                    >
-                                        <Check
-                                            v-if="copied"
-                                            class="w-4 text-green-500"
-                                        />
-                                        <Copy v-else class="w-4" />
-                                    </button>
-                                </template>
+                                <Spinner class="h-4 w-4" />
                             </div>
+                            <template v-else>
+                                <input
+                                    type="text"
+                                    readonly
+                                    :value="manualSetupKey"
+                                    class="w-full border-none bg-transparent px-4 py-3 text-center font-mono text-sm font-bold tracking-[0.1em] text-foreground focus:ring-0 focus:outline-none"
+                                />
+                                <button
+                                    @click="copy(manualSetupKey || '')"
+                                    class="flex items-center justify-center border-l border-border bg-background px-4 transition-colors hover:bg-muted"
+                                >
+                                    <Check
+                                        v-if="copied"
+                                        class="h-4 w-4 text-emerald-500"
+                                    />
+                                    <Copy
+                                        v-else
+                                        class="h-4 w-4 text-muted-foreground"
+                                    />
+                                </button>
+                            </template>
                         </div>
                     </template>
                 </template>
@@ -244,48 +222,54 @@ watch(
                         @finish="code = ''"
                         @success="isOpen = false"
                         v-slot="{ errors, processing }"
+                        class="w-full"
                     >
                         <input type="hidden" name="code" :value="code" />
+
                         <div
                             ref="pinInputContainerRef"
-                            class="relative w-full space-y-3"
+                            class="flex w-full flex-col items-center justify-center space-y-8"
                         >
-                            <div
-                                class="flex w-full flex-col items-center justify-center space-y-3 py-2"
+                            <InputOTP
+                                id="otp"
+                                v-model="code"
+                                :maxlength="6"
+                                :disabled="processing"
                             >
-                                <InputOTP
-                                    id="otp"
-                                    v-model="code"
-                                    :maxlength="6"
-                                    :disabled="processing"
-                                >
-                                    <InputOTPGroup>
-                                        <InputOTPSlot
-                                            v-for="index in 6"
-                                            :key="index"
-                                            :index="index - 1"
-                                        />
-                                    </InputOTPGroup>
-                                </InputOTP>
-                                <InputError :message="errors?.code" />
-                            </div>
+                                <InputOTPGroup class="gap-2">
+                                    <InputOTPSlot
+                                        v-for="index in 6"
+                                        :key="index"
+                                        :index="index - 1"
+                                        class="h-12 w-10 rounded-lg border border-border bg-background text-xl font-black text-foreground shadow-sm transition-all focus:scale-105 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:h-14 sm:w-12"
+                                    />
+                                </InputOTPGroup>
+                            </InputOTP>
+                            <InputError
+                                v-if="errors?.code"
+                                :message="errors.code"
+                                class="text-center"
+                            />
 
-                            <div class="flex w-full items-center space-x-5">
+                            <div class="flex w-full items-center gap-3">
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    class="w-auto flex-1"
+                                    class="w-full flex-1 border-border bg-transparent text-foreground hover:bg-muted"
                                     @click="showVerificationStep = false"
                                     :disabled="processing"
+                                    size="lg"
                                 >
                                     Back
                                 </Button>
                                 <Button
                                     type="submit"
-                                    class="w-auto flex-1"
+                                    class="hover:bg-primary-hover w-full flex-1 bg-primary text-primary-foreground shadow-sm"
                                     :disabled="processing || code.length < 6"
+                                    size="lg"
                                 >
-                                    Confirm
+                                    <span v-if="processing">Verifying...</span>
+                                    <span v-else>Confirm</span>
                                 </Button>
                             </div>
                         </div>
