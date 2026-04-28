@@ -26,6 +26,7 @@ onMounted(async () => {
         const resAirports = await fetch(
             'https://gist.githubusercontent.com/tdreyno/4278655/raw/7b0762c09b519f40397e4c3e100b097d861f5588/airports.json',
         );
+
         if (resAirports.ok) {
             const dataAirports = await resAirports.json();
             allAirports.value = dataAirports.filter(
@@ -38,8 +39,12 @@ onMounted(async () => {
 });
 
 const getCityName = (code: string) => {
-    if (!allAirports.value || allAirports.value.length === 0) return '';
+    if (!allAirports.value || allAirports.value.length === 0) {
+        return '';
+    }
+
     const airport = allAirports.value.find((a: any) => a.code === code);
+
     return airport ? airport.name : '';
 };
 
@@ -71,6 +76,7 @@ const currentSeatMap = computed(() => {
         activeFlightDirection.value === 'outbound'
             ? props.outbound_seats_map
             : props.return_seats_map;
+
     return mapSource ? mapSource[activeSegmentId.value] : {};
 });
 
@@ -87,11 +93,14 @@ const currentSegmentSelections = computed(() => {
             result[pIndex] = selections.value[currentDir][pIndex][segId];
         }
     }
+
     return result;
 });
 
 const toggleSeat = (seat: any) => {
-    if (!seat.is_available) return;
+    if (!seat.is_available) {
+        return;
+    }
 
     const pIndex = activePassengerIndex.value;
     const currentDir = activeFlightDirection.value;
@@ -100,15 +109,21 @@ const toggleSeat = (seat: any) => {
     const alreadySelectedByOther = Object.entries(
         currentSegmentSelections.value,
     ).find(([idx, s]) => s.id === seat.id && Number(idx) !== pIndex);
-    if (alreadySelectedByOther)
-        return alert('Kursi ini sudah dipilih untuk penumpang lain.');
+
+    if (alreadySelectedByOther) {
+        return alert(
+            'This seat has already been reserved for another passenger.',
+        );
+    }
 
     if (selections.value[currentDir][pIndex][segId]?.id === seat.id) {
         delete selections.value[currentDir][pIndex][segId];
+
         return;
     }
 
     const passengerZeroSeat = selections.value[currentDir][0][segId];
+
     if (pIndex !== 0 && passengerZeroSeat) {
         if (passengerZeroSeat.class !== seat.class) {
             return alert(
@@ -118,6 +133,7 @@ const toggleSeat = (seat: any) => {
     }
 
     selections.value[currentDir][pIndex][segId] = seat;
+
     if (
         pIndex < props.passengers.length - 1 &&
         !selections.value[currentDir][pIndex + 1][segId]
@@ -136,18 +152,25 @@ const switchTab = (direction: 'outbound' | 'return') => {
 
 const isReadyToCheckout = computed(() => {
     let isReady = true;
+
     for (let pIndex = 0; pIndex < props.passengers.length; pIndex++) {
         props.outbound_flight?.segments?.forEach((seg: any) => {
-            if (!selections.value.outbound[pIndex][seg.id]) isReady = false;
+            if (!selections.value.outbound[pIndex][seg.id]) {
+                isReady = false;
+            }
         });
     }
+
     if (props.trip_type === 'round_trip' && props.return_flight) {
         for (let pIndex = 0; pIndex < props.passengers.length; pIndex++) {
             props.return_flight?.segments?.forEach((seg: any) => {
-                if (!selections.value.return[pIndex][seg.id]) isReady = false;
+                if (!selections.value.return[pIndex][seg.id]) {
+                    isReady = false;
+                }
             });
         }
     }
+
     return isReady;
 });
 
@@ -161,15 +184,22 @@ const pointsToUse = ref<number>(0);
 const applyPromo = () => {
     promoError.value = '';
     appliedPromo.value = null;
-    if (!inputPromoCode.value) return;
+
+    if (!inputPromoCode.value) {
+        return;
+    }
 
     const foundPromo = props.promos.find(
         (p) =>
             p.code.toUpperCase() === inputPromoCode.value.toUpperCase() &&
             p.quota !== 0,
     );
-    if (foundPromo) appliedPromo.value = foundPromo;
-    else promoError.value = 'Invalid, expired, or fully redeemed code.';
+
+    if (foundPromo) {
+        appliedPromo.value = foundPromo;
+    } else {
+        promoError.value = 'Invalid, expired, or fully redeemed code.';
+    }
 };
 
 const removePromo = () => {
@@ -181,13 +211,17 @@ const removePromo = () => {
 const totalSeatPrice = computed(() => {
     let total = 0;
     ['outbound', 'return'].forEach((dir) => {
-        if (dir === 'return' && props.trip_type !== 'round_trip') return;
+        if (dir === 'return' && props.trip_type !== 'round_trip') {
+            return;
+        }
+
         Object.values(selections.value[dir]).forEach((pSelections: any) => {
             Object.values(pSelections).forEach((sObj: any) => {
                 total += Number(sObj.additional_price_usd || 0);
             });
         });
     });
+
     return total;
 });
 
@@ -213,16 +247,21 @@ const totalPriceObj = computed(() => {
     let subTotal = baseAndBaggageTotal + totalSeatPrice.value;
 
     let insuranceTotal = 0;
+
     if (selectedInsuranceId.value) {
         const ins = props.insurances.find(
             (i) => i.id === selectedInsuranceId.value,
         );
-        if (ins)
+
+        if (ins) {
             insuranceTotal = Number(ins.price_usd) * props.passengers.length;
+        }
     }
+
     subTotal += insuranceTotal;
 
     let discountTotal = 0;
+
     if (appliedPromo.value) {
         if (appliedPromo.value.discount_type === 'percentage') {
             discountTotal =
@@ -232,13 +271,21 @@ const totalPriceObj = computed(() => {
         }
     }
 
-    let totalAfterDiscount = Math.max(0, subTotal - discountTotal);
+    const totalAfterDiscount = Math.max(0, subTotal - discountTotal);
 
-    if (pointsToUse.value > props.availablePoints)
-        pointsToUse.value = props.availablePoints;
-    if (pointsToUse.value > totalAfterDiscount)
-        pointsToUse.value = Math.floor(totalAfterDiscount);
-    if (pointsToUse.value < 0 || !pointsToUse.value) pointsToUse.value = 0;
+    let value = pointsToUse.value;
+
+    if (value > props.availablePoints) {
+        value = props.availablePoints;
+    }
+
+    if (value > totalAfterDiscount) {
+        value = Math.floor(totalAfterDiscount);
+    }
+
+    if (value < 0 || !value) {
+        value = 0;
+    }
 
     const finalPay = Math.max(0, totalAfterDiscount - pointsToUse.value);
 
@@ -254,14 +301,20 @@ const totalPriceObj = computed(() => {
 
 const calculateDuration = (departure: string, arrival: string): string => {
     const diffMs = new Date(arrival).getTime() - new Date(departure).getTime();
-    if (isNaN(diffMs)) return '-';
+
+    if (isNaN(diffMs)) {
+        return '-';
+    }
+
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
     return diffHrs === 0 ? `${diffMins}m` : `${diffHrs}h ${diffMins}m`;
 };
 
 const formatTime = (dateString: string): string => {
     const date = new Date(dateString);
+
     return isNaN(date.getTime())
         ? '-'
         : date.toLocaleTimeString('en-GB', {
@@ -273,6 +326,7 @@ const formatTime = (dateString: string): string => {
 
 const displayFlightNumber = (airlineCode: string, flightNumber: string) => {
     const num = String(flightNumber || '').toUpperCase();
+
     return num.includes('-')
         ? num
         : `${String(airlineCode || '').toUpperCase()}-${num}`;
@@ -286,7 +340,9 @@ const formatCurrency = (value: number) => {
 };
 
 const proceedToCheckout = () => {
-    if (!isReadyToCheckout.value) return;
+    if (!isReadyToCheckout.value) {
+        return;
+    }
 
     const finalPassengers = props.passengers.map((p, i) => {
         const outSeatsArray = Object.keys(selections.value.outbound[i]).map(

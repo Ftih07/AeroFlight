@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/block-lang -->
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref, onMounted } from 'vue';
@@ -35,16 +36,6 @@ onMounted(async () => {
         console.error('Gagal mengambil data bandara:', error);
     }
 });
-
-const getCityName = (code) => {
-    if (!allAirports.value || allAirports.value.length === 0) {
-        return '';
-    }
-
-    const airport = allAirports.value.find((a) => a.code === code);
-
-    return airport ? airport.name : '';
-};
 
 const formatTime = (dateString) =>
     new Date(dateString).toLocaleTimeString([], {

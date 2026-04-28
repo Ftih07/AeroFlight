@@ -1,6 +1,7 @@
+<!-- eslint-disable vue/block-lang -->
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import AeroLayout from '@/Layouts/AeroLayout.vue';
+import AeroLayout from '@/layouts/AeroLayout.vue';
 </script>
 
 <template>

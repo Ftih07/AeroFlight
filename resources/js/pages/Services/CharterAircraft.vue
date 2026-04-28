@@ -1,7 +1,8 @@
+<!-- eslint-disable vue/block-lang -->
 <script setup>
-import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import AeroLayout from '@/Layouts/AeroLayout.vue';
+import { ref } from 'vue';
+import AeroLayout from '@/layouts/AeroLayout.vue';
 
 const isComingSoon = ref(false);
 

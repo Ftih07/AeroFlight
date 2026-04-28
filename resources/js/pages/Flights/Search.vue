@@ -70,7 +70,17 @@ watch(
 
 const availableAirlines = computed(() => {
     const all = [...props.flights, ...props.returnFlights];
-    const uniqueCodes = [...new Set(all.map((f) => f.airline_code))];
+
+    // Ekstrak kode dari segment pertama, dan buang data yang kosong/undefined
+    const codes = all
+        .map((f) => {
+            return f.segments && f.segments.length > 0
+                ? f.segments[0].airline_code
+                : f.airline_code;
+        })
+        .filter(Boolean);
+
+    const uniqueCodes = [...new Set(codes)];
 
     return uniqueCodes
         .map((code) => ({

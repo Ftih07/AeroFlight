@@ -176,15 +176,17 @@
     </AeroLayout>
 </template>
 
+<!-- eslint-disable vue/block-lang -->
 <script>
 export default {
     layout: null,
 };
 </script>
 
+<!-- eslint-disable vue/block-lang -->
 <script setup>
-import { ref, onMounted } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
 import AeroLayout from '@/layouts/AeroLayout.vue';
 
 defineProps({
