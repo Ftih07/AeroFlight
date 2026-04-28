@@ -3,7 +3,10 @@
 namespace App\Filament\Resources\Flights\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -13,42 +16,22 @@ class FlightForm
     {
         return $schema
             ->components([
-                Section::make('Flight Details')
-                    ->schema([
-                        TextInput::make('airline_code')
-                            ->label('Airline Code (e.g., GA, SQ)')
-                            ->required()
-                            ->maxLength(3),
-                        TextInput::make('flight_number')
-                            ->label('Flight Number (e.g., GA-112)')
-                            ->required()
-                            ->maxLength(10),
-                    ])->columns(2),
+                Section::make('General Info')->schema([
+                    Select::make('provider')
+                        ->options(['internal' => 'Internal', 'duffel' => 'Duffel'])
+                        ->default('internal'),
+                    TextInput::make('provider_flight_id'),
+                    TextInput::make('origin_airport')->required()->maxLength(3),
+                    TextInput::make('destination_airport')->required()->maxLength(3),
+                    DateTimePicker::make('departure_at')->required(),
+                    DateTimePicker::make('arrival_at')->required(),
+                    TextInput::make('stop_count')->numeric()->default(0),
+                ])->columns(2),
 
-                Section::make('Route & Schedule')
-                    ->schema([
-                        TextInput::make('origin_airport')
-                            ->label('Origin (IATA Code)')
-                            ->required()
-                            ->maxLength(3),
-                        TextInput::make('destination_airport')
-                            ->label('Destination (IATA Code)')
-                            ->required()
-                            ->maxLength(3),
-                        DateTimePicker::make('departure_at')
-                            ->required(),
-                        DateTimePicker::make('arrival_at')
-                            ->required(),
-                    ])->columns(2),
-
-                Section::make('Pricing')
-                    ->schema([
-                        TextInput::make('base_price_usd')
-                            ->label('Base Price (USD)')
-                            ->required()
-                            ->numeric()
-                            ->prefix('$'),
-                    ])->columns(1),
+                Section::make('Refund Policy')->schema([
+                    Toggle::make('is_refundable')->inline(false),
+                    Textarea::make('policy_notes')->columnSpanFull(),
+                ])->columns(2),
             ]);
     }
 }

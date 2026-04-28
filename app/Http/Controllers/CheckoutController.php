@@ -515,11 +515,11 @@ class CheckoutController extends Controller
 
             $parentBooking->update(['status' => 'paid', 'pnr_code' => $pnrParent, 'qr_token' => $qrParent]);
 
-            // 👇 UBAH DI SINI: Gunakan final_amount_usd
+            // 👇 Pencatatan transaksi HANYA di tiket Parent, nominal udah bulat (Grand Total)
             $parentBooking->transactions()->create([
                 'type' => 'payment',
                 'amount' => $parentBooking->final_amount_usd,
-                'description' => 'Stripe Payment (Outbound)'
+                'description' => 'Stripe Payment (Full Order)'
             ]);
 
             if ($childBooking) {
@@ -528,12 +528,7 @@ class CheckoutController extends Controller
 
                 $childBooking->update(['status' => 'paid', 'pnr_code' => $pnrChild, 'qr_token' => $qrChild]);
 
-                // 👇 UBAH DI SINI: Gunakan final_amount_usd
-                $childBooking->transactions()->create([
-                    'type' => 'payment',
-                    'amount' => $childBooking->final_amount_usd,
-                    'description' => 'Stripe Payment (Return)'
-                ]);
+                // 👇 Transaksi untuk child DIHAPUS agar tidak double-entry di Admin Filament
             }
 
             // --- TAMBAHKAN POIN LOYALTI KE USER SETELAH BAYAR SUKSES ---

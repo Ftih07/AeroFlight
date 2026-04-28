@@ -465,7 +465,7 @@
                         :href="service.link"
                         class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary transition-all hover:gap-2"
                     >
-                        Explore Directory
+                        {{ service.linkText || 'Learn More' }}
                         <svg
                             class="h-3 w-3"
                             fill="none"
@@ -1322,6 +1322,7 @@ const services = [
             'Easy refund & reschedule',
             'Instant e-ticket',
         ],
+        link: '/services/commercial-flights',
     },
     {
         icon: '📦',
@@ -1334,6 +1335,7 @@ const services = [
             'Door-to-door pickup',
             'Express & standard',
         ],
+        link: '/services/air-cargo',
     },
     {
         icon: '🛩️',
@@ -1346,6 +1348,7 @@ const services = [
             'VIP concierge service',
             'Custom routes',
         ],
+        link: '/services/charter-aircraft',
     },
     {
         icon: '🌍',
@@ -1358,7 +1361,7 @@ const services = [
             'Seat layouts',
             'Operator info',
         ],
-        link: '/airlines', // Kita simpan nama route-nya di sini
+        link: '/airlines',
     },
 ];
 

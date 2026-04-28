@@ -15,12 +15,21 @@ class UsersTable
     {
         return $table
             ->columns([
-                TextColumn::make('name')->searchable(),
+                TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('email')->searchable(),
+                TextColumn::make('role')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'admin' => 'danger',
+                        'customer' => 'success',
+                        default => 'gray',
+                    }),
+                TextColumn::make('loyalty_points')->sortable()->numeric(),
                 IconColumn::make('two_factor_confirmed_at')
                     ->label('2FA Active')
                     ->boolean()
                     ->getStateUsing(fn($record) => $record->two_factor_confirmed_at !== null),
+                TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
                 ActionsAction::make('reset2fa')

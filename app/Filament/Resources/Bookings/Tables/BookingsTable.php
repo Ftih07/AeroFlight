@@ -22,31 +22,60 @@ class BookingsTable
     {
         return $table
             ->columns([
-                TextColumn::make('pnr_code')->searchable()->label('PNR'),
-                TextColumn::make('flight.flight_number')->label('Flight'),
-                TextColumn::make('total_amount_usd')->money('USD')->sortable(),
+                TextColumn::make('pnr_code')
+                    ->label('PNR')
+                    ->searchable()
+                    ->copyable()
+                    ->weight('bold')
+                    // 👇 TAMBAHKAN DESKRIPSI DINAMIS DI SINI
+                    ->description(function ($record) {
+                        if ($record->parent_booking_id) {
+                            // Jika ini tiket Return, cari PNR Parent-nya
+                            $parent = \App\Models\Booking::find($record->parent_booking_id);
+                            return "🛬 Return Flight (Parent: " . ($parent?->pnr_code ?? 'N/A') . ")";
+                        }
 
-                // --- TAMBAHKAN KOLOM INI ---
-                TextColumn::make('Refunded')
-                    ->label('Refunded Amount')
-                    ->getStateUsing(function ($record) {
-                        $refundTx = $record->transactions->where('type', 'refund')->first();
-                        return $refundTx ? '$' . number_format($refundTx->amount, 2) : '-';
-                    })
-                    ->color('danger'),
+                        // Jika ini tiket Main, cek apakah punya anak (Round Trip)
+                        $child = \App\Models\Booking::where('parent_booking_id', $record->id)->first();
+                        if ($child) {
+                            return "🛫 Main Booking (Includes Return: {$child->pnr_code})";
+                        }
 
+                        // Jika tidak punya anak berarti One-Way
+                        return "🛫 One-Way Booking";
+                    }),
+                TextColumn::make('user.name')
+                    ->label('Customer')
+                    ->searchable(),
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'paid' => 'success',
-                        'used' => 'gray',
-                        'refund_requested' => 'danger',
-                        'refunded' => 'primary',
-                        default => 'gray',
+                        'pending' => 'gray',
+                        'awaiting_payment' => 'warning',
+                        'confirmed' => 'success',
+                        'cancelled' => 'danger',
+                        'used' => 'info',         // Tambahan untuk check-in
+                        'refunded' => 'danger',   // Tambahan untuk refund
+                        'expired' => 'warning',   // Tambahan untuk expired
+                        default => 'gray',        // Wajib ada biar nggak error 500 kalau ada status asing
                     }),
-
-                TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('final_amount_usd')
+                    ->label('Total Paid')
+                    ->sortable()
+                    // 👇 3. UBAH TAMPILAN UANGNYA KHUSUS BUAT TIKET RETURN
+                    ->formatStateUsing(function ($state, $record) {
+                        if ($record->parent_booking_id) {
+                            return 'Billed in Main'; // Teks khusus biar gak bingung
+                        }
+                        return '$' . number_format($state, 2); // Format uang biasa buat tiket Outbound
+                    })
+                    // Kasih warna badge abu-abu kalau dia tiket Return
+                    ->badge(fn($record) => $record->parent_booking_id !== null)
+                    ->color(fn($record) => $record->parent_booking_id ? 'gray' : null),
+                TextColumn::make('created_at')
+                    ->label('Booking Date')
+                    ->dateTime()
+                    ->sortable(),
             ])
             ->actions([
                 // Tombol Edit pindah ke sini (paling atas atau bawah bebas)
@@ -195,10 +224,17 @@ class BookingsTable
                         // 1. Update status jadi cancelled
                         $record->update(['status' => 'cancelled']);
 
-                        // 2. KOSONGKAN KURSI!
+                        // 2. KOSONGKAN KURSI (Pakai format JSON yang baru)
                         foreach ($record->passengers as $passenger) {
-                            \App\Models\Seat::where('id', $passenger->seat_id)
-                                ->update(['is_available' => true]);
+                            $passenger->update(['assigned_seats' => null]);
+                        }
+
+                        // Optional: Kembalikan Poin User kalau dia sempet pake poin
+                        if ($record->points_used > 0) {
+                            $user = \App\Models\User::find($record->user_id);
+                            if ($user) {
+                                $user->increment('loyalty_points', $record->points_used);
+                            }
                         }
 
                         Notification::make()->title('Booking Cancelled & Seats Freed!')->warning()->send();

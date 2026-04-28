@@ -9,7 +9,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
+use Filament\Support\Colors\Color; // Pastikan ini tetap ada
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -29,7 +29,16 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin-aeroflight')
             ->login()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
+            ])
+            ->favicon(asset('logo.svg'))
+            ->brandName('AeroFlight')
+            ->navigationGroups([
+                '1. Aviation Master',
+                '2. Flight Operations',
+                '3. Add-ons & Marketing',
+                '4. Bookings & Finance',
+                '5. User Management',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

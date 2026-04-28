@@ -187,7 +187,6 @@ class MasterDataSeeder extends Seeder
                 'arrival_at' => $arrival,
                 'stop_count' => count($f['transits']),
                 'is_refundable' => $f['refund'],
-                'refund_fee_usd' => $f['refund_fee'],
                 'policy_notes' => $f['notes'],
             ]);
 

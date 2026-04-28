@@ -3,6 +3,7 @@
 use App\Http\Controllers\AirlineController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+use Inertia\Inertia;
 
 // --- CONTROLLER IMPORTS ---
 use App\Http\Controllers\Auth\GoogleController;
@@ -18,6 +19,18 @@ Route::inertia('/', 'Welcome', [
 ])->name('home');
 
 Route::get('/flights', [FlightController::class, 'search'])->name('flights.search');
+
+Route::get('/services/commercial-flights', function () {
+    return Inertia::render('Services/CommercialFlights');
+})->name('services.commercial-flights');
+
+Route::get('/services/air-cargo', function () {
+    return Inertia::render('Services/AirCargo');
+})->name('services.air-cargo');
+
+Route::get('/services/charter-aircraft', function () {
+    return Inertia::render('Services/CharterAircraft');
+})->name('services.charter');
 
 // Halaman Directory (Katalog Semua Maskapai)
 Route::get('/airlines', [AirlineController::class, 'index'])->name('airlines.index');
